@@ -364,19 +364,28 @@ class GameBoard:
         >>> b.ended
         True
         """
-        # TODO Task #3 (you can leave calculating the score until Task #5)
+        # TODO Task #3
+        num_of_raccoons_trapped = 0
+        for character in self._tiles:
+            if isinstance(character, Raccoon):
+                if not character.check_trapped():
+                    self.ended = False
+                    return None
+                num_of_raccoons_trapped += 1
+
+        self.ended = True
+        final_score = num_of_raccoons_trapped * 10 + self.adjacent_bin_score()
+
+        return final_score
 
     def adjacent_bin_score(self) -> int:
         """
         Return the size of the largest cluster of adjacent recycling bins
         on this board.
-
         Two recycling bins are adjacent when they are directly beside each other
         in one of the four directions (up, down, left, right).
-
         See Task #5 in the handout for ideas if you aren't sure how
         to approach this problem.
-
         >>> b = GameBoard(3, 3)
         >>> _ = RecyclingBin(b, 1, 1)
         >>> _ = RecyclingBin(b, 0, 0)
@@ -403,6 +412,33 @@ class GameBoard:
         5
         """
         # TODO Task #5
+        checked = []
+        score = 1
+
+        for curr_character, curr_position in self._tiles.items():
+            checked.append(curr_character)
+            if not isinstance(curr_character, RecyclingBin):
+                continue
+
+            for character, position in self._tiles.items():
+                if character in checked:
+                    continue
+
+                if self.__isAdjacent(curr_position, position):
+                    score += 1
+
+        return score
+
+    def __isAdjacent(self, position: Tuple[int, int], other_position: Tuple[int, int]) -> bool:
+        """ Returns whether <other_position> is adjacent to <position>
+
+        """
+        for direction in get_shuffled_directions():
+            if (position[0] + direction[0] == other_position[0]) and \
+                    (position[1] + direction[1] == other_position[1]):
+                return True
+
+        return False
 
 
 class Character:
@@ -719,6 +755,25 @@ class Raccoon(TurnTaker):
         True
         """
         # TODO Task #3
+        directions = get_shuffled_directions()
+
+        for direction in directions:
+            if not self.__isOccupiedTile(direction[0] + self.x, direction[1] + self.y):
+                return False
+
+        return True
+
+    def __isOccupiedTile(self, x: int, y: int) -> int:
+        """Returns True if the tile at the given position <x, y> is occupied by something
+        or is not on the board, otherwise returns False.
+        """
+        if self.board.on_board(x, y):
+            if len(self.board.at(x, y)) > 0:
+                return True
+            else:
+                return False
+        else:
+            return True
 
     def move(self, direction: Tuple[int, int]) -> bool:
         """Attempt to move this Raccoon in <direction> and return whether
